@@ -29,3 +29,5 @@ jobs:
       - name: Test Rust workspace
         # The hosted runner's virtual GPU and process elevation are not representative of a player's PC.
         run: cargo test --workspace -- --skip lists_this_pcs_gpus_with_ids_that_tell_them_apart --skip a_game_run_normally_isnt_elevated
+      - name: Build ETS2 plugin
+        run: cargo build --release -p westplay-plugin
