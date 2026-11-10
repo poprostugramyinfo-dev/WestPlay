@@ -31,3 +31,13 @@ jobs:
         run: cargo test --workspace -- --skip lists_this_pcs_gpus_with_ids_that_tell_them_apart --skip a_game_run_normally_isnt_elevated
       - name: Build ETS2 plugin
         run: cargo build --release -p westplay-plugin
+      - name: Verify x64 plugin and SCS exports
+        shell: pwsh
+        run: ./tools/verify-plugin.ps1 -Path ./target/release/westplay.dll
+      - name: Publish downloadable ETS2 plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WestPlay-HaulMP-ETS2-win-x64-${{ github.sha }}
+          path: target/release/westplay.dll
+          if-no-files-found: error
+          retention-days: 90

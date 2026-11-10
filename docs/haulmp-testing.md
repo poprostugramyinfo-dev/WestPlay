@@ -28,11 +28,21 @@ cargo check --workspace
 cargo test --workspace
 npm test --prefix ui
 cargo build --release -p westplay-plugin
+./tools/verify-plugin.ps1 -Path ./target/release/westplay.dll
 ```
 
 The hosted Windows check skips two existing tests that depend on a physical GPU and a non-elevated process;
 the hosted runner exposes a virtual adapter and runs its test process elevated. All other workspace tests run,
 including the HaulMP feed tests. Run the full commands above on a normal Windows PC as well.
+
+The GitHub Actions run publishes `westplay.dll` as a 90-day downloadable artifact. The Windows check verifies
+that it is an x64 PE DLL, contains the ETS2 SCS telemetry entry points, and can be mapped by the Windows DLL
+loader with its imports resolved. This is a loader/format check, not an in-game check; do not treat HaulMP
+integration as tested until the in-game steps below pass.
+
+Download the ZIP from the workflow run's **Artifacts** section, unpack `westplay.dll`, and place it in the
+ETS2 `bin/win_x64/plugins` folder as documented by the WestPlay setup. The artifact contains the game plugin
+only; it does not bundle the WestPlay companion app or its game-specific setup files.
 
 For the full companion app, use `npm run dev` as documented in the main README. Cargo may need an internet
 connection the first time to download the new `reqwest` dependency.
