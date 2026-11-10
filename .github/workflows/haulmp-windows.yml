@@ -20,17 +20,16 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install dependencies
         run: npm ci
-      - name: Build cabin UI
-        run: npm run build --prefix ui
-      - name: Test cabin UI
+      - name: Build and test cabin UI
         run: npm test --prefix ui
       - name: Check Rust workspace
         run: cargo check --workspace
       - name: Test Rust workspace
-        # The hosted runner's virtual GPU and process elevation are not representative of a player's PC.
         run: cargo test --workspace -- --skip lists_this_pcs_gpus_with_ids_that_tell_them_apart --skip a_game_run_normally_isnt_elevated
-      - name: Build companion app, ETS2 plugin and map worker
-        run: cargo build --release -p westplay-app -p westplay-plugin -p westplay-maps
+      - name: Build complete Tauri app, ETS2 plugin and map worker
+        run: npm run build
+      - name: Build map worker
+        run: cargo build --release -p westplay-maps
       - name: Verify x64 plugin and SCS exports
         shell: pwsh
         run: ./tools/verify-plugin.ps1 -Path ./target/release/westplay.dll
@@ -46,16 +45,15 @@ jobs:
           @'
           WestPlay-HaulMP — wersja przenośna Windows x64
 
-          1. Rozpakuj cały folder w wybrane miejsce, np. Dokumenty\\WestPlay-HaulMP.
+          1. Rozpakuj cały folder w wybrane miejsce.
           2. Zamknij oryginalny WestPlay, jeśli jest uruchomiony.
           3. Uruchom westplay.exe.
-          4. W konfiguracji WestPlay wybierz instalację ETS2 i przeprowadź standardową instalację pluginu.
-          5. Uruchom ETS2 przez HaulMP. Otwórz mapę WestPlay w kabinie i włącz warstwę HaulMP przyciskiem w prawym górnym rogu.
+          4. W konfiguracji wskaż ETS2 i zainstaluj plugin WestPlay-HaulMP.
+          5. Uruchom ETS2 przez HaulMP. Otwórz mapę WestPlay w kabinie i włącz warstwę HaulMP.
 
-          Zachowaj westplay.exe, westplay.dll i westplay-maps.exe razem w jednym folderze.
-          Ta paczka nie instaluje ani nie nadpisuje oryginalnej aplikacji WestPlay. Obie wersje korzystają
-          z tego samego profilu ustawień WestPlay, dlatego nie uruchamiaj ich jednocześnie.
-          Warstwa HaulMP pokazuje pozycje dostępne w publicznym feedzie HaulMP; wymaga połączenia z internetem.
+          Zachowaj wszystkie trzy pliki EXE/DLL razem. Zrób kopię oryginalnego westplay.dll przed instalacją pluginu.
+          Aplikacja korzysta z profilu ustawień WestPlay. Nie uruchamiaj dwóch wersji jednocześnie.
+          Warstwa HaulMP wymaga internetu i publicznego feedu HaulMP.
           '@ | Set-Content -Encoding UTF8 (Join-Path $package 'INSTRUKCJA.txt')
           Compress-Archive -Path (Join-Path $package '*') -DestinationPath (Join-Path $PWD 'WestPlay-HaulMP-Windows-x64.zip') -Force
       - name: Publish portable app package
