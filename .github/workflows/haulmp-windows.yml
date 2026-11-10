@@ -1,4 +1,4 @@
-name: HaulMP Windows checks
+name: HaulMP Windows checks and portable app
 
 on:
   push:
@@ -29,15 +29,39 @@ jobs:
       - name: Test Rust workspace
         # The hosted runner's virtual GPU and process elevation are not representative of a player's PC.
         run: cargo test --workspace -- --skip lists_this_pcs_gpus_with_ids_that_tell_them_apart --skip a_game_run_normally_isnt_elevated
-      - name: Build ETS2 plugin
-        run: cargo build --release -p westplay-plugin
+      - name: Build companion app, ETS2 plugin and map worker
+        run: cargo build --release -p westplay-app -p westplay-plugin -p westplay-maps
       - name: Verify x64 plugin and SCS exports
         shell: pwsh
         run: ./tools/verify-plugin.ps1 -Path ./target/release/westplay.dll
-      - name: Publish downloadable ETS2 plugin artifact
+      - name: Assemble portable WestPlay-HaulMP package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $package = Join-Path $PWD 'package'
+          New-Item -ItemType Directory -Force -Path $package | Out-Null
+          Copy-Item './target/release/westplay.exe' $package
+          Copy-Item './target/release/westplay.dll' $package
+          Copy-Item './target/release/westplay-maps.exe' $package
+          @'
+          WestPlay-HaulMP — wersja przenośna Windows x64
+
+          1. Rozpakuj cały folder w wybrane miejsce, np. Dokumenty\\WestPlay-HaulMP.
+          2. Zamknij oryginalny WestPlay, jeśli jest uruchomiony.
+          3. Uruchom westplay.exe.
+          4. W konfiguracji WestPlay wybierz instalację ETS2 i przeprowadź standardową instalację pluginu.
+          5. Uruchom ETS2 przez HaulMP. Otwórz mapę WestPlay w kabinie i włącz warstwę HaulMP przyciskiem w prawym górnym rogu.
+
+          Zachowaj westplay.exe, westplay.dll i westplay-maps.exe razem w jednym folderze.
+          Ta paczka nie instaluje ani nie nadpisuje oryginalnej aplikacji WestPlay. Obie wersje korzystają
+          z tego samego profilu ustawień WestPlay, dlatego nie uruchamiaj ich jednocześnie.
+          Warstwa HaulMP pokazuje pozycje dostępne w publicznym feedzie HaulMP; wymaga połączenia z internetem.
+          '@ | Set-Content -Encoding UTF8 (Join-Path $package 'INSTRUKCJA.txt')
+          Compress-Archive -Path (Join-Path $package '*') -DestinationPath (Join-Path $PWD 'WestPlay-HaulMP-Windows-x64.zip') -Force
+      - name: Publish portable app package
         uses: actions/upload-artifact@v4
         with:
-          name: WestPlay-HaulMP-ETS2-win-x64-${{ github.sha }}
-          path: target/release/westplay.dll
+          name: WestPlay-HaulMP-Windows-x64
+          path: WestPlay-HaulMP-Windows-x64.zip
           if-no-files-found: error
           retention-days: 90
