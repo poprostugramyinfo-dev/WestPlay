@@ -597,9 +597,10 @@ function syncPlayers(target: LiveMap, now: number) {
   }
   const { tracks, clock } = useTruckersMp.getState()
   const around = useLive.getState().nearby?.players ?? []
+  const haulMp = useLive.getState().haulMpPlayers
   if (hosts.length === 0 || now - target.playersDrawn < PLAYERS_DRAWN_EVERY) return
   // None to draw, and none drawn: nothing to do.
-  if (tracks.size === 0 && around.length === 0 && target.playersShown === 0) return
+  if (tracks.size === 0 && around.length === 0 && haulMp.length === 0 && target.playersShown === 0) return
   const source = target.map.getSource<GeoJSONSource>(PLAYERS_SOURCE)
   // The style still loading: next frame.
   if (!source) return
@@ -612,9 +613,28 @@ function syncPlayers(target: LiveMap, now: number) {
   // Around the player, as the SDK has them; the feed's own place for them left out.
   const close = new Set(around.map(([id]) => id))
   const t = now / 1000 + (clock ?? 0) - PLAYERS_BEHIND
+  const [x0, z0, x1, z1] = viewArea(target.map)
+  const telemetry = useLive.getState().telemetry
+  let ownHaulMpId: number | null = null
+  let ownHaulMpDistance = 150
+  if (telemetry) {
+    for (const player of haulMp) {
+      const distance = Math.hypot(player.x - telemetry.x, player.z - telemetry.z)
+      if (distance <= ownHaulMpDistance) {
+        ownHaulMpId = player.id
+        ownHaulMpDistance = distance
+      }
+    }
+  }
   const features = [
     ...around.map(([, x, z]) => point(x, z)),
     ...[...tracks].filter(([id]) => !close.has(id)).map(([, samples]) => point(...trackAt(samples, t))),
+    ...haulMp
+      .filter(
+        (player) =>
+          player.id !== ownHaulMpId && player.x >= x0 && player.x <= x1 && player.z >= z0 && player.z <= z1,
+      )
+      .map((player) => point(player.x, player.z)),
   ]
   target.playersShown = features.length
   source.setData({ type: 'FeatureCollection', features })

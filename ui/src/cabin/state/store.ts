@@ -312,6 +312,8 @@ export interface LiveState {
   truckersmpGame: 'ets2' | 'ats' | null
   /** Under TruckersMP, the players around the player from its SDK, as the host last said (`null`: none). */
   nearby: Nearby | null
+  /** Players from HaulMP's public live-map feed, as last supplied by the host. */
+  haulMpPlayers: { id: number; x: number; z: number; heading: number }[]
   /** The music's spectrum as the host last said it (Settings › Equalizer's, `HostMessage` `spectrum`). */
   spectrum: readonly number[]
   /** The host draws the screen's cursor (`cursor` message): the page draws none of its own then. */
@@ -351,6 +353,7 @@ weather: null,
   truckersmp: false,
   truckersmpGame: null,
   nearby: null,
+  haulMpPlayers: [],
   spectrum: [],
   cursorByHost: false,
 }))
@@ -559,6 +562,9 @@ function receiveHostMessage(now: () => number): (message: HostMessage) => void {
               ? null
               : { server: message.server, local: message.local, players: message.players, at: now() },
         })
+        break
+      case 'haulMpPlayers':
+        useLive.setState({ haulMpPlayers: message.players })
         break
       case 'game':
         // The game closed: the screen goes off as with the truck's electrics (the kept apps go with it), and

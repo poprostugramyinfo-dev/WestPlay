@@ -201,6 +201,8 @@ export type HostMessage =
   /** Whether the game runs under TruckersMP (the page shows its other players, from TruckersMP's map feed). */
   /** Whether the game runs under TruckersMP, and which game it is (`null`: not said yet). */
   | { type: 'truckersmp'; on: boolean; game?: 'ets2' | 'ats' | null }
+  /** The public HaulMP live-map positions, kept while its map layer is enabled. */
+  | { type: 'haulMpPlayers'; players: { id: number; x: number; z: number; heading: number }[] }
   /** Under TruckersMP, the players around the player from its SDK (the plugin's): its game server's id, the
    * player's own number on it, and each other player's number, world x and z (m) and heading (turns); `null`s
    * and none when there are none to tell. */
@@ -325,6 +327,8 @@ export type PageMessage =
   /** The text field selected, a number that changes with every selection (0: none), for the player's own
    * keyboard to type into while the truck stands still. */
   | { type: 'typing'; selection: number }
+  /** Show or hide the HaulMP player layer on the cab's map. */
+  | { type: 'haulMp'; on: boolean }
   /** A command for YouTube's player, or a question for YouTube (answered with `youtubeAnswer`). */
   | { type: 'youtube'; command: YouTubeCommand }
   /** A command for Spotify's web player (`westplay_host::spotify::Command`): `show` places it, in the frame's

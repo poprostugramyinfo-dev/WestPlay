@@ -34,7 +34,7 @@
 
 WestPlay puts a phone-style car screen on your truck's own dashboard display, inside the game: Euro Truck
 Simulator 2 or American Truck Simulator, one WestPlay for both. Your route on a
-map made from your own game, your music, YouTube, the weather on your drive: right where a real truck has its
+map made from your own game, optional HaulMP player dots, your music, YouTube, the weather on your drive: right where a real truck has its
 screen, used with the mouse while you hold a key.
 
 ## Features
@@ -84,6 +84,12 @@ screen, used with the mouse while you hold a key.
 
 **The companion app** on your PC sets everything up: it finds your games, ETS2, ATS or both, installs WestPlay
 into each, builds their maps, and keeps WestPlay up to date.
+
+### HaulMP players (experimental)
+
+On the in-cab map, tap **HaulMP** to show or hide players from HaulMP's public Europe 1 live map. The option is
+off until selected. The Windows host reads the public feed while enabled and draws its positions on WestPlay's
+existing game map. The feature still needs a live ETS2 and HaulMP test; see [Windows test notes](docs/haulmp-testing.md).
 
 ## How it works
 
@@ -177,6 +183,8 @@ WestPlay has no servers, no accounts of its own and no analytics. It doesn't col
 - You sign in to Apple Music, Spotify and YouTube on their own pages, in WestPlay's own browser profile on your PC,
   as you would in a browser. WestPlay keeps no account data of its own.
 - Your map is built from your game on your PC and stays there.
+- If you turn on the HaulMP map layer, WestPlay requests HaulMP's public player feed. Your truck coordinates
+  are not sent in that request; the service sees the normal network request from your PC.
 - WestPlay talks to the services you use, to GitHub to look for updates, and to Kreosus only if you open
   "Support me".
 

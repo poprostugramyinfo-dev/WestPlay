@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useLook } from '../state/hooks'
 import { setLiveMapAppearance, showLiveMap } from './liveMap'
 import type { MapData } from './mapData'
+import { isInHost } from '../../shared/host'
+import { setHaulMpEnabled, useHaulMp } from './haulmp'
 import './maps.css'
 
 /**
@@ -11,6 +13,7 @@ import './maps.css'
  */
 export function RoadMap({ data, interactive }: { data: MapData; interactive: boolean }) {
   const host = useRef<HTMLDivElement>(null)
+  const haulMpEnabled = useHaulMp((state) => state.enabled)
   const { appearance } = useLook()
   // The appearance as of now, for when the map is shown (outside render).
   const appearanceRef = useRef(appearance)
@@ -26,5 +29,24 @@ export function RoadMap({ data, interactive }: { data: MapData; interactive: boo
   // Light and dark: restyled in place, fading like the rest of the UI.
   useEffect(() => setLiveMapAppearance(appearance), [appearance])
 
-  return <div ref={host} className="road-map-host" />
+  return (
+    <div className="road-map-surface">
+      <div ref={host} className="road-map-host" />
+      {isInHost() && (
+        <button
+          className={`haulmp-toggle${haulMpEnabled ? ' active' : ''}`}
+          type="button"
+          aria-pressed={haulMpEnabled}
+          aria-label={haulMpEnabled ? 'Hide HaulMP players' : 'Show HaulMP players'}
+          title="HaulMP players"
+          onClick={(event) => {
+            event.stopPropagation()
+            setHaulMpEnabled(!haulMpEnabled)
+          }}
+        >
+          HaulMP
+        </button>
+      )}
+    </div>
+  )
 }

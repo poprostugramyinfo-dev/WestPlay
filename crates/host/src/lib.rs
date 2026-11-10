@@ -13,6 +13,7 @@ mod cursor;
 pub mod customize;
 pub mod fitted;
 mod game_settings;
+mod haulmp;
 mod gpu;
 pub mod graphics;
 mod handover;
@@ -285,6 +286,9 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
     let _ = std::fs::create_dir_all(&music_covers);
     webview.map_folder_to_any_page(music_folder::COVERS_HOST, &music_covers)?;
     let music_watch = music_folder::FolderWatch::start(music_covers);
+    // HaulMP's public live-map feed is fetched outside WebView2 (its API doesn't grant cross-origin browser reads).
+    let haulmp_watch = haulmp::Watch::start();
+    let mut haulmp_message = haulmp_players_message(&[]);
     // The folder and its songs as last listed (sent again when the page reloads).
     let mut music_dir: Option<PathBuf> = None;
     let mut music_listing: Option<String> = None;
@@ -813,6 +817,7 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     let _ = webview.post_json(&game_shown_message(game_shown));
                     let _ = webview.post_json(&game_message(game_running));
                     let _ = webview.post_json(&truckersmp_message(truckersmp, truckersmp_game));
+                    let _ = webview.post_json(&haulmp_message);
                     let _ = webview.post_json(&maps::map_message(map_shown.0.as_deref(), map_shown.1));
                     if spotify.is_some() {
                         let _ = webview.post_json(&spotify::state_message(spotify_state.as_ref(), spotify_signing_in));
@@ -858,6 +863,13 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                     if status.westplay_open != Some(open) {
                         status.westplay_open = Some(open);
                         (config.on_status)(&status);
+                    }
+                }
+                Some(PageMessage::HaulMp { on }) => {
+                    haulmp_watch.set_enabled(on);
+                    if !on {
+                        haulmp_message = haulmp_players_message(&[]);
+                        let _ = webview.post_json(&haulmp_message);
                     }
                 }
                 Some(PageMessage::Startup { stage }) => startup::mark(&format!("page: {stage}")),
@@ -1008,6 +1020,11 @@ pub fn run(mut config: Config, stop: Arc<AtomicBool>) -> Result<(), Error> {
                 }
                 None => {}
             }
+        }
+
+        if let Some(players) = haulmp_watch.take_update() {
+            haulmp_message = haulmp_players_message(&players);
+            let _ = webview.post_json(&haulmp_message);
         }
         if let Some(routes) = planner.answer() {
             let _ = webview.post_json(&routes);
@@ -2143,6 +2160,8 @@ enum PageMessage {
     Startup { stage: String },
     /// Whether WestPlay is open on the truck's screen: posted as the page loads and whenever it changes.
     Westplay { open: bool },
+    /// Whether the in-cabin map should show the public HaulMP live-map feed.
+    HaulMp { on: bool },
     /// The wallpaper chosen in the cab's Settings (an id: `wallpapers.ts`), to keep with the settings.
     Wallpaper { id: String },
     /// The truck's information bar beside WestPlay, kept or not, chosen in the cab's Settings (Appearance).
@@ -2187,6 +2206,10 @@ enum PageMessage {
     /// What stopping at each of these map nodes (uids in hex) would add to the trip the game's route makes
     /// (`planner`); `{"type":"detours"}` comes back with `id`.
     Detours { id: u32, nodes: Vec<String> },
+}
+
+fn haulmp_players_message(players: &[haulmp::Player]) -> String {
+    serde_json::json!({ "type": "haulMpPlayers", "players": players }).to_string()
 }
 
 /// A route being handed to the game's GPS: the page's request, the hand-over (the route picked and the
