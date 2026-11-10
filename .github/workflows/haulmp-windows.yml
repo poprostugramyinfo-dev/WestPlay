@@ -27,4 +27,5 @@ jobs:
       - name: Check Rust workspace
         run: cargo check --workspace
       - name: Test Rust workspace
-        run: cargo test --workspace
+        # The hosted runner's virtual GPU and process elevation are not representative of a player's PC.
+        run: cargo test --workspace -- --skip lists_this_pcs_gpus_with_ids_that_tell_them_apart --skip a_game_run_normally_isnt_elevated

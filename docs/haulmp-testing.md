@@ -30,6 +30,10 @@ npm test --prefix ui
 cargo build --release -p westplay-plugin
 ```
 
+The hosted Windows check skips two existing tests that depend on a physical GPU and a non-elevated process;
+the hosted runner exposes a virtual adapter and runs its test process elevated. All other workspace tests run,
+including the HaulMP feed tests. Run the full commands above on a normal Windows PC as well.
+
 For the full companion app, use `npm run dev` as documented in the main README. Cargo may need an internet
 connection the first time to download the new `reqwest` dependency.
 
